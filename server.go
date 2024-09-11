@@ -39,11 +39,11 @@ func main() {
 	if err = syscall.Listen(fd, syscall.SOMAXCONN); nil != err {
 		panic(err)
 	}
-	fmt.Println("redis server listen 0.0.0.0 6379 tcp")
 	// 初始化核心部分
 	core.Init()
 	// 释放资源
 	defer core.Release()
+	fmt.Println("redis server listen 0.0.0.0 6379 tcp")
 	for {
 		nfd, _, err := syscall.Accept(fd)
 		if nil != err {

@@ -44,9 +44,11 @@ func (aof *AOF) Recover(cmd commands.Commander) error {
 	aof.Lock()
 	defer aof.Unlock()
 	reader := reader.NewResp(aof.file)
-	return reader.ReadAll(func(value model.Value) {
+	err := reader.ReadAll(func(value model.Value) {
 		cmd.Do(value.Array)
 	})
+	fmt.Println("已完成AOF文件数据恢复")
+	return err
 }
 
 func (aof *AOF) Close() error {
