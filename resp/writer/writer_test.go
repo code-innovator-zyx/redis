@@ -1,4 +1,4 @@
-package resp
+package writer
 
 import "testing"
 

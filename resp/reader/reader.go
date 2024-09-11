@@ -1,4 +1,4 @@
-package resp
+package reader
 
 import (
 	"bufio"
@@ -58,6 +58,31 @@ func (r *Reader) Read() (val model.Value, err error) {
 	default:
 		return model.Value{}, err
 	}
+}
+
+func (r *Reader) ReadAll(v func(model.Value)) error {
+	var (
+		value model.Value
+		err   error
+		_type byte
+	)
+	for {
+		_type, err = r.reader.ReadByte()
+		if nil != err {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+		switch _type {
+		case consts.ARRAY:
+			value, err = r.readArray()
+		case consts.BULK:
+			value, err = r.readBulk()
+		}
+		v(value)
+	}
+	return nil
 }
 
 // $5

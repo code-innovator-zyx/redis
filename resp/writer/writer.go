@@ -1,9 +1,10 @@
-package resp
+package writer
 
 import (
 	"bufio"
 	"io"
 	"redis/commands"
+	"redis/core"
 	"redis/model"
 )
 
@@ -19,16 +20,20 @@ type Writer struct {
 	commander commands.Commander
 }
 
-func NewWriter(rd io.Writer) *Writer {
+func NewWriter(rd io.Writer, commander commands.Commander) *Writer {
 
-	return &Writer{bufio.NewWriter(rd), commands.NewCommander()}
+	return &Writer{bufio.NewWriter(rd), commander}
 }
 
-func (w *Writer) Flush(v model.Value) error {
+func (w *Writer) Write(v model.Value) error {
+	defer w.writer.Flush()
 	// 先执行 命令
-	result := w.commander.Do(v.Array)
+	result, aof := w.commander.Do(v.Array)
+	if aof {
+		core.AOF.Write(v)
+	}
+	// 处理返回结果
 	var bytes = result.Marshal()
 	_, err := w.writer.Write(bytes)
-	w.writer.Flush()
 	return err
 }

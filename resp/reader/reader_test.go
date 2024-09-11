@@ -1,9 +1,10 @@
-package resp
+package reader
 
 import (
 	"bufio"
 	"fmt"
 	"os"
+	"redis/model"
 	"strconv"
 	"strings"
 	"testing"
@@ -17,15 +18,25 @@ import (
  */
 
 func Test_readLine(t *testing.T) {
-	input := "$5\r\nAhmed\r\n"
-
-	resp := NewResp(strings.NewReader(input))
-	line, i, err := resp.readLine()
+	f, err := os.OpenFile("../appendonly.aof", os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
-		return
+		panic(err)
 	}
-	fmt.Println(string(line))
-	fmt.Println(i)
+
+	resp := NewResp(f)
+	err = resp.ReadAll(func(value model.Value) {
+		fmt.Println(value)
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	//resp = NewResp(f)
+	//line, err = resp.Read()
+	//if err != nil {
+	//	return
+	//}
+	//t.Log(line)
 }
 
 func TestRead(t *testing.T) {

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"redis/resp"
+	"redis/core"
+	"redis/resp/reader"
+	"redis/resp/writer"
 	"syscall"
 )
 
@@ -37,7 +39,11 @@ func main() {
 	if err = syscall.Listen(fd, syscall.SOMAXCONN); nil != err {
 		panic(err)
 	}
-	fmt.Println("succee list 0.0.0.0 6379 tcp")
+	fmt.Println("redis server listen 0.0.0.0 6379 tcp")
+	// 初始化核心部分
+	core.Init()
+	// 释放资源
+	defer core.Release()
 	for {
 		nfd, _, err := syscall.Accept(fd)
 		if nil != err {
@@ -56,7 +62,7 @@ func handleConnection(fd int) {
 		return
 	}
 	defer file.Close()
-	writer := resp.NewWriter(file) // 使用 *os.File 创建一个 Writer
+	writer := writer.NewWriter(file, core.Commander) // 使用 *os.File 创建一个 Writer
 	for {
 		n, err := syscall.Read(fd, buf)
 		if err != nil {
@@ -68,7 +74,8 @@ func handleConnection(fd int) {
 			fmt.Println("client disconnected")
 			return
 		}
-		r := resp.NewResp(bytes.NewReader(buf))
+		// 解析RSP 协议
+		r := reader.NewResp(bytes.NewReader(buf))
 		value, err := r.Read()
 		if err != nil {
 			if err == io.EOF {
@@ -78,7 +85,8 @@ func handleConnection(fd int) {
 			fmt.Println("error reading from client,err = ", err.Error())
 			return
 		}
-		if err := writer.Flush(value); err != nil {
+		// 执行命令并返回
+		if err := writer.Write(value); err != nil {
 			fmt.Println("Error writing to connection:", err)
 			return
 		}
