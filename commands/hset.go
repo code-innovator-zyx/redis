@@ -1,6 +1,9 @@
 package commands
 
 import (
+	"redis/model"
+	"redis/types"
+	"regexp"
 	"sync"
 )
 
@@ -49,5 +52,15 @@ func (h *hset) hdel(hash, key string) {
 	if _, ok := h.data[hash]; ok {
 		// 存在删除
 		delete(h.data[hash], key)
+	}
+}
+
+func (h *hset) keys(pattern string, f func(model.Value)) {
+	for i := range h.data {
+		if ok, _ := regexp.Match(pattern, []byte(i)); ok {
+			f(model.Value{
+				Ty: types.STRING, Str: i,
+			})
+		}
 	}
 }

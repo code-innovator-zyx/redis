@@ -6,7 +6,7 @@
 - [ ] 用户登录功能
 - [x] Redis 命令动态调用实现
 - [ ] RDB
-- [ ] AOF
+- [x] AOF
 
 ## TODO
 COMMAND 命令完善

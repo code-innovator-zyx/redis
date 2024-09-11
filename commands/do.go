@@ -85,7 +85,7 @@ func (c *command) PING_(args []model.Value) (model.Value, bool) {
 
 func (c *command) SET_(args []model.Value) (model.Value, bool) {
 	if len(args) != 2 {
-		return c.err("ERR wrong number of arguments for 'set' command"), false
+		return c.err("(error) ERR wrong number of arguments for 'set' command"), false
 	}
 	key := args[0].Bulk
 	value := args[1].Bulk
@@ -94,7 +94,7 @@ func (c *command) SET_(args []model.Value) (model.Value, bool) {
 }
 func (c *command) GET_(args []model.Value) (model.Value, bool) {
 	if len(args) != 1 {
-		return c.err("Miss key for 'get' command"), false
+		return c.err("(error) ERR wrong number of arguments for 'get' command"), false
 	}
 	key := args[0].Bulk
 	value, ok := c.setData.get(key)
@@ -109,7 +109,7 @@ func (c *command) GET_(args []model.Value) (model.Value, bool) {
 }
 func (c *command) DEL_(args []model.Value) (model.Value, bool) {
 	if len(args) != 1 {
-		return c.err("ERR wrong number of arguments for 'del' command"), false
+		return c.err("(error) ERR wrong number of arguments for 'del' command"), false
 	}
 	key := args[0].Bulk
 	c.setData.del(key)
@@ -118,7 +118,7 @@ func (c *command) DEL_(args []model.Value) (model.Value, bool) {
 
 func (c *command) HGET_(args []model.Value) (model.Value, bool) {
 	if len(args) != 2 {
-		return c.err("ERR wrong number of arguments for 'hget' command"), false
+		return c.err("(error) ERR wrong number of arguments for 'hget' command"), false
 	}
 	hash := args[0].Bulk
 	key := args[1].Bulk
@@ -134,7 +134,7 @@ func (c *command) HGET_(args []model.Value) (model.Value, bool) {
 
 func (c *command) HSET_(args []model.Value) (model.Value, bool) {
 	if len(args) != 3 {
-		return c.err("ERR wrong number of arguments for 'hset' command"), false
+		return c.err("(error) ERR wrong number of arguments for 'hset' command"), false
 	}
 	hash := args[0].Bulk
 	key := args[1].Bulk
@@ -145,10 +145,25 @@ func (c *command) HSET_(args []model.Value) (model.Value, bool) {
 
 func (c *command) HDEL_(args []model.Value) (model.Value, bool) {
 	if len(args) != 2 {
-		return c.err("ERR wrong number of arguments for 'hdel' command"), false
+		return c.err("(error) ERR wrong number of arguments for 'hdel' command"), false
 	}
 	hash := args[0].Bulk
 	key := args[1].Bulk
 	c.hsetData.hdel(hash, key)
 	return c.ok(), true
+}
+
+func (c *command) KEYS_(args []model.Value) (model.Value, bool) {
+	if len(args) != 1 {
+		return c.err("(error) ERR wrong number of arguments for 'keys' command"), false
+	}
+	pattern := args[0].Bulk
+	pattern = strings.Replace(pattern, "*", ".*", -1)
+	result := model.Value{Ty: types.ARRAY}
+	fn := func(value model.Value) {
+		result.Array = append(result.Array, value)
+	}
+	c.setData.keys(pattern, fn)
+	c.hsetData.keys(pattern, fn)
+	return result, false
 }
